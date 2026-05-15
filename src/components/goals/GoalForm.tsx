@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '@/components/ui/button'
@@ -58,7 +58,7 @@ export function GoalForm({ currentWeightageTotal, initialData, isShared }: GoalF
     }
 
     setIsLoading(true)
-    const result = await createGoal(data) // Note: In a real app, this would call updateGoal if initialData exists
+    const result = await createGoal(data)
     if (result?.error) {
       toast.error(result.error)
       setIsLoading(false)
@@ -95,21 +95,27 @@ export function GoalForm({ currentWeightageTotal, initialData, isShared }: GoalF
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="uom_type">UoM Type</Label>
-              <Select 
-                onValueChange={(val: any) => form.setValue('uom_type', val)} 
-                defaultValue={form.getValues('uom_type')}
-                disabled={isShared}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="min">Min (Numeric)</SelectItem>
-                  <SelectItem value="max">Max (Numeric)</SelectItem>
-                  <SelectItem value="timeline">Timeline (Date)</SelectItem>
-                  <SelectItem value="zero">Zero (Target 0)</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={form.control}
+                name="uom_type"
+                render={({ field }) => (
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || 'min'}
+                    disabled={isShared}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="min">Min (Numeric)</SelectItem>
+                      <SelectItem value="max">Max (Numeric)</SelectItem>
+                      <SelectItem value="timeline">Timeline (Date)</SelectItem>
+                      <SelectItem value="zero">Zero (Target 0)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="target">Target Value</Label>

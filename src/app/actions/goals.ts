@@ -32,10 +32,10 @@ export async function createGoal(formData: any) {
     employee_id: user.id,
     thrust_area: formData.thrust_area,
     title: formData.title,
-    description: formData.description,
+    description: formData.description || null,
     uom_type: formData.uom_type,
-    target: formData.target,
-    target_date: formData.target_date,
+    target: formData.target ? Number(formData.target) : null,
+    target_date: formData.target_date || null,
     weightage: newWeightage,
     status: 'draft'
   })

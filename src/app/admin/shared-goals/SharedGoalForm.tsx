@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
@@ -79,17 +79,26 @@ export function SharedGoalForm({ employees }: SharedGoalFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>UoM Type</Label>
-              <Select onValueChange={(val: any) => form.setValue('uom_type', val)} defaultValue="min">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="min">Min</SelectItem>
-                  <SelectItem value="max">Max</SelectItem>
-                  <SelectItem value="timeline">Timeline</SelectItem>
-                  <SelectItem value="zero">Zero</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={form.control}
+                name="uom_type"
+                render={({ field }) => (
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || 'min'}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="min">Min</SelectItem>
+                      <SelectItem value="max">Max</SelectItem>
+                      <SelectItem value="timeline">Timeline</SelectItem>
+                      <SelectItem value="zero">Zero</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label>Target Value / Date</Label>
@@ -104,6 +113,7 @@ export function SharedGoalForm({ employees }: SharedGoalFormProps) {
                 <div key={emp.id} className="flex items-center space-x-2">
                   <Checkbox 
                     id={emp.id}
+                    checked={form.watch('employeeIds').includes(emp.id)}
                     onCheckedChange={(checked) => {
                       const current = form.getValues('employeeIds')
                       if (checked) {
