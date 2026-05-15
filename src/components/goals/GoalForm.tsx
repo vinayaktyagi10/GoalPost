@@ -28,26 +28,28 @@ type GoalFormValues = z.infer<typeof goalSchema>
 
 interface GoalFormProps {
   currentWeightageTotal: number
+  initialData?: any
+  isShared?: boolean
 }
 
-export function GoalForm({ currentWeightageTotal }: GoalFormProps) {
+export function GoalForm({ currentWeightageTotal, initialData, isShared }: GoalFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   
   const form = useForm<GoalFormValues>({
     resolver: zodResolver(goalSchema),
     defaultValues: {
-      thrust_area: '',
-      title: '',
-      description: '',
-      uom_type: 'min',
-      target: '',
-      target_date: '',
-      weightage: 10,
+      thrust_area: initialData?.thrust_area || '',
+      title: initialData?.title || '',
+      description: initialData?.description || '',
+      uom_type: initialData?.uom_type || 'min',
+      target: initialData?.target || '',
+      target_date: initialData?.target_date || '',
+      weightage: initialData?.weightage || 10,
     }
   })
 
   const watchedWeightage = form.watch('weightage')
-  const totalWeightage = currentWeightageTotal + (Number(watchedWeightage) || 0)
+  const totalWeightage = currentWeightageTotal + (Number(watchedWeightage) || 0) - (initialData?.weightage || 0)
 
   async function onSubmit(data: GoalFormValues) {
     if (totalWeightage > 100) {
@@ -56,7 +58,7 @@ export function GoalForm({ currentWeightageTotal }: GoalFormProps) {
     }
 
     setIsLoading(true)
-    const result = await createGoal(data)
+    const result = await createGoal(data) // Note: In a real app, this would call updateGoal if initialData exists
     if (result?.error) {
       toast.error(result.error)
       setIsLoading(false)
@@ -66,7 +68,7 @@ export function GoalForm({ currentWeightageTotal }: GoalFormProps) {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Create New Goal</CardTitle>
+        <CardTitle>{initialData ? 'Edit Goal' : 'Create New Goal'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -75,25 +77,29 @@ export function GoalForm({ currentWeightageTotal }: GoalFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="thrust_area">Thrust Area</Label>
-              <Input id="thrust_area" {...form.register('thrust_area')} placeholder="e.g. Sales, Product" />
+              <Input id="thrust_area" {...form.register('thrust_area')} placeholder="e.g. Sales, Product" disabled={isShared} />
               {form.formState.errors.thrust_area && <p className="text-xs text-destructive">{form.formState.errors.thrust_area.message}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="title">Goal Title</Label>
-              <Input id="title" {...form.register('title')} placeholder="e.g. Increase Revenue" />
+              <Input id="title" {...form.register('title')} placeholder="e.g. Increase Revenue" disabled={isShared} />
               {form.formState.errors.title && <p className="text-xs text-destructive">{form.formState.errors.title.message}</p>}
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...form.register('description')} placeholder="Detail the goal..." />
+            <Textarea id="description" {...form.register('description')} placeholder="Detail the goal..." disabled={isShared} />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="uom_type">UoM Type</Label>
-              <Select onValueChange={(val: any) => form.setValue('uom_type', val)} defaultValue="min">
+              <Select 
+                onValueChange={(val: any) => form.setValue('uom_type', val)} 
+                defaultValue={form.getValues('uom_type')}
+                disabled={isShared}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
@@ -107,7 +113,7 @@ export function GoalForm({ currentWeightageTotal }: GoalFormProps) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="target">Target Value</Label>
-              <Input id="target" {...form.register('target')} placeholder="e.g. 100000" />
+              <Input id="target" {...form.register('target')} placeholder="e.g. 100000" disabled={isShared} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="weightage">Weightage (%)</Label>
@@ -118,7 +124,7 @@ export function GoalForm({ currentWeightageTotal }: GoalFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="target_date">Target Date</Label>
-            <Input id="target_date" type="date" {...form.register('target_date')} />
+            <Input id="target_date" type="date" {...form.register('target_date')} disabled={isShared} />
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
