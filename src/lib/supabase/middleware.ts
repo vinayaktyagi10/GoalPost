@@ -27,8 +27,57 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // refreshing the auth token
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const isLoginPage = request.nextUrl.pathname === '/login'
+
+  if (!user && !isLoginPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  if (user && isLoginPage) {
+    // Redirect to appropriate dashboard based on role
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .single()
+
+    const role = userData?.role || 'employee'
+    const url = request.nextUrl.clone()
+    
+    if (role === 'admin') url.pathname = '/admin/dashboard'
+    else if (role === 'manager') url.pathname = '/manager/team'
+    else url.pathname = '/employee/goals'
+    
+    return NextResponse.redirect(url)
+  }
+
+  // Basic role-based path protection
+  if (user) {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .single()
+    
+    const role = userData?.role || 'employee'
+    const path = request.nextUrl.pathname
+
+    if (path.startsWith('/admin') && role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/employee/goals' // Default fallback
+      return NextResponse.redirect(url)
+    }
+
+    if (path.startsWith('/manager') && role !== 'manager' && role !== 'admin') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/employee/goals'
+      return NextResponse.redirect(url)
+    }
+  }
 
   return supabaseResponse
 }
