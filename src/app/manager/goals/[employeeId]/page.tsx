@@ -1,37 +1,38 @@
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { GoalStatusBadge } from '@/components/goals/GoalStatusBadge'
-import { PlusCircle } from 'lucide-react'
+import { GoalReviewActions } from '@/components/goals/GoalReviewActions'
 import { WeightageBar } from '@/components/goals/WeightageBar'
-import { GoalSubmitAction } from '@/components/goals/GoalSubmitAction'
 
-export default async function EmployeeGoalsPage() {
+export default async function EmployeeGoalReviewPage({
+  params,
+}: {
+  params: Promise<{ employeeId: string }>
+}) {
+  const { employeeId } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
+
+  // Get employee details
+  const { data: employee } = await supabase
+    .from('users')
+    .select('name, email')
+    .eq('id', employeeId)
+    .single()
+
+  // Get goals
   const { data: goals } = await supabase
     .from('goals')
     .select('*')
-    .eq('employee_id', user?.id)
+    .eq('employee_id', employeeId)
     .order('created_at', { ascending: false })
 
   const totalWeightage = goals?.reduce((sum, g) => sum + Number(g.weightage), 0) || 0
 
   return (
     <div className="container mx-auto py-10 px-4">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">My Goals</h1>
-          <p className="text-muted-foreground mt-1">Manage and track your performance goals.</p>
-        </div>
-        <Link href="/employee/goals/new">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            New Goal
-          </Button>
-        </Link>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">{employee?.name}'s Goals</h1>
+        <p className="text-muted-foreground mt-1">Review, approve, or return goals for revision.</p>
       </div>
 
       <WeightageBar currentTotal={totalWeightage} className="max-w-md mb-8" />
@@ -52,7 +53,7 @@ export default async function EmployeeGoalsPage() {
             {goals?.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
-                  No goals found. Create your first goal to get started.
+                  No goals found for this employee.
                 </TableCell>
               </TableRow>
             ) : (
@@ -65,11 +66,8 @@ export default async function EmployeeGoalsPage() {
                   <TableCell>
                     <GoalStatusBadge status={goal.status} />
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <GoalSubmitAction goalId={goal.id} status={goal.status} />
-                    <Link href={`/employee/goals/${goal.id}`}>
-                      <Button variant="ghost" size="sm">View</Button>
-                    </Link>
+                  <TableCell className="text-right">
+                    <GoalReviewActions goalId={goal.id} status={goal.status} />
                   </TableCell>
                 </TableRow>
               ))
