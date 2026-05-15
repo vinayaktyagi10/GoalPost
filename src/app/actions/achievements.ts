@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { calculateProgressScore, UomType } from '@/lib/utils/calculator'
+import { calculateProgressScore, UomType, isQuarterlyWindowActive } from '@/lib/utils/calculator'
 
 export async function upsertAchievement(formData: {
   goalId: string
@@ -11,6 +11,11 @@ export async function upsertAchievement(formData: {
   actualDate?: string
 }) {
   const supabase = await createClient()
+
+  // 0. Enforce active window
+  if (!isQuarterlyWindowActive(formData.quarter)) {
+    return { error: `Achievement logging for ${formData.quarter} is currently closed.` }
+  }
 
   // 1. Get the goal details to compute the score
   const { data: goal, error: goalError } = await supabase

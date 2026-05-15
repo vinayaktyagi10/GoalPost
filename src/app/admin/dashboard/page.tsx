@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { CompletionChart } from '@/components/admin/AnalyticsCharts'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -27,6 +28,16 @@ export default async function AdminDashboardPage() {
     return { ...emp, total, approved }
   })
 
+  const chartData = (employees || []).map(emp => {
+    const goals = emp.goals || []
+    const total = goals.length
+    const approved = goals.filter((g: any) => g.status === 'approved' || g.status === 'locked').length
+    return {
+      name: emp.name.split(' ')[0],
+      rate: total > 0 ? Math.round((approved / total) * 100) : 0
+    }
+  })
+
   return (
     <div className="container mx-auto py-10 px-4">
       <div className="mb-8">
@@ -34,39 +45,34 @@ export default async function AdminDashboardPage() {
         <p className="text-muted-foreground mt-1">Overview of goal completion across the company.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Employees</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Team Completion Rates (%)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{allUsers?.length || 0}</div>
+            <CompletionChart data={chartData} />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Goals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalGoals}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Approved Goals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{approvedGoals}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completion Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completionRate.toFixed(1)}%</div>
-          </CardContent>
-        </Card>
+        
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Org Completion Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold">{completionRate.toFixed(1)}%</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Approved Goals</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-green-600">{approvedGoals}</div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="border rounded-lg">
