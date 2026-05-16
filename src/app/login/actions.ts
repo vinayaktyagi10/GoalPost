@@ -8,19 +8,20 @@ export async function login(formData: FormData) {
   const password = formData.get('password') as string
   const supabase = await createClient()
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
-  if (error) {
-    return { error: error.message }
+  if (error || !data.user) {
+    return { error: error?.message || 'Login failed' }
   }
 
   // Get user role for redirect
   const { data: userData } = await supabase
     .from('users')
     .select('role')
+    .eq('id', data.user.id)
     .single()
 
   if (userData?.role === 'admin') {

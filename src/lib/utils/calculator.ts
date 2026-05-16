@@ -50,6 +50,8 @@ export function getCurrentQuarter(): string {
 }
 
 export function isQuarterlyWindowActive(quarter: string): boolean {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') return true;
+
   const now = new Date()
   const month = now.getMonth() + 1
   

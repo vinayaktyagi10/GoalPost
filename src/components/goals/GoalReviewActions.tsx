@@ -20,7 +20,7 @@ export function GoalReviewActions({ goalId, status }: GoalReviewActionsProps) {
     setIsLoading(true)
     const result = await approveGoal(goalId)
     if (result.success) {
-      toast.success('Goal approved')
+      toast.success('Goal approved & locked')
     } else {
       toast.error(result.error || 'Failed to approve goal')
     }
@@ -57,7 +57,7 @@ export function GoalReviewActions({ goalId, status }: GoalReviewActionsProps) {
         disabled={isLoading}
       >
         <CheckCircle className="mr-2 h-4 w-4" />
-        Approve
+        Approve & Lock
       </Button>
     </div>
   )

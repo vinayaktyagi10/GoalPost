@@ -24,6 +24,16 @@ export async function createGoal(formData: any) {
   const currentSum = await getWeightageSum(user.id)
   const newWeightage = Number(formData.weightage)
 
+  const { count, error: countError } = await supabase
+    .from('goals')
+    .select('*', { count: 'exact', head: true })
+    .eq('employee_id', user.id)
+
+  if (countError) return { error: countError.message }
+  if (count && count >= 8) {
+    return { error: 'Maximum of 8 goals allowed per employee.' }
+  }
+
   if (currentSum + newWeightage > 100) {
     return { error: 'Total weightage would exceed 100%' }
   }
