@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { upsertAchievement } from '@/app/actions/achievements'
 import { toast } from 'sonner'
 import { Save } from 'lucide-react'
@@ -15,6 +16,7 @@ interface QuarterlyInputProps {
   initialValue?: number
   initialDate?: string
   initialScore?: number
+  initialStatus?: string
 }
 
 export function QuarterlyInput({ 
@@ -23,11 +25,13 @@ export function QuarterlyInput({
   quarter, 
   initialValue, 
   initialDate,
-  initialScore
+  initialScore,
+  initialStatus = 'not_started'
 }: QuarterlyInputProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [value, setValue] = useState(initialValue?.toString() || '')
   const [date, setDate] = useState(initialDate || '')
+  const [status, setStatus] = useState(initialStatus)
   const [score, setScore] = useState(initialScore || 0)
 
   async function handleSave() {
@@ -37,6 +41,7 @@ export function QuarterlyInput({
       quarter,
       actualValue: uomType !== 'timeline' ? Number(value) : undefined,
       actualDate: uomType === 'timeline' ? date : undefined,
+      progressStatus: status,
     })
 
     if (result.success) {
@@ -50,7 +55,7 @@ export function QuarterlyInput({
 
   return (
     <div className="flex items-end gap-4 p-4 border rounded-lg bg-card">
-      <div className="flex-1 space-y-2">
+      <div className="flex-[2] space-y-2">
         <Label className="text-xs font-semibold uppercase text-muted-foreground">
           {quarter} Achievement
         </Label>
@@ -71,6 +76,26 @@ export function QuarterlyInput({
             disabled={isLoading}
           />
         )}
+      </div>
+
+      <div className="flex-1 space-y-2">
+        <Label className="text-xs font-semibold uppercase text-muted-foreground">
+          Status
+        </Label>
+        <Select 
+          value={status} 
+          onValueChange={(val) => val && setStatus(val)} 
+          disabled={isLoading}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="not_started">Not Started</SelectItem>
+            <SelectItem value="on_track">On Track</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="text-center px-4 border-l border-r">

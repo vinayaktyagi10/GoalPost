@@ -59,6 +59,7 @@ export default async function EmployeeCheckinPage() {
                     initialValue={achievement?.actual_value}
                     initialDate={achievement?.actual_date}
                     initialScore={achievement?.computed_score}
+                    initialStatus={achievement?.progress_status}
                   />
                 </CardContent>
               </Card>

@@ -9,6 +9,7 @@ export async function upsertAchievement(formData: {
   quarter: string
   actualValue?: number
   actualDate?: string
+  progressStatus: string
 }) {
   const supabase = await createClient()
 
@@ -43,7 +44,7 @@ export async function upsertAchievement(formData: {
       quarter: formData.quarter,
       actual_value: formData.actualValue,
       actual_date: formData.actualDate,
-      progress_status: computedScore === 100 ? 'completed' : 'on_track',
+      progress_status: formData.progressStatus,
       computed_score: computedScore,
       updated_at: new Date().toISOString()
     }, {
@@ -69,7 +70,7 @@ export async function upsertAchievement(formData: {
         quarter: formData.quarter,
         actual_value: formData.actualValue,
         actual_date: formData.actualDate,
-        progress_status: computedScore === 100 ? 'completed' : 'on_track',
+        progress_status: formData.progressStatus,
         computed_score: computedScore,
         updated_at: new Date().toISOString()
       }))
