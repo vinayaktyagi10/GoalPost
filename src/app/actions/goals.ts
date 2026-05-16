@@ -53,5 +53,5 @@ export async function createGoal(formData: any) {
   if (error) return { error: error.message }
 
   revalidatePath('/employee/goals')
-  redirect('/employee/goals')
+  return { success: true }
 }

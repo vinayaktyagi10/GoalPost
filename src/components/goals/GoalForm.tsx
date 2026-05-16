@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +35,7 @@ interface GoalFormProps {
 
 export function GoalForm({ currentWeightageTotal, initialData, isShared }: GoalFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
   
   const form = useForm<GoalFormValues>({
     resolver: zodResolver(goalSchema),
@@ -62,7 +64,11 @@ export function GoalForm({ currentWeightageTotal, initialData, isShared }: GoalF
     if (result?.error) {
       toast.error(result.error)
       setIsLoading(false)
+      return
     }
+
+    router.push('/employee/goals')
+    // Note: No setIsLoading(false) here to allow the redirect to take over
   }
 
   return (
