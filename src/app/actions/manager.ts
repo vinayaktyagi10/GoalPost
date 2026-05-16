@@ -3,12 +3,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getCurrentQuarter } from '@/lib/utils/calculator'
+import { sendEmail } from '@/lib/email'
 
 export async function approveGoal(goalId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
   
+  // 1. Fetch goal and employee details for notification
+  const { data: goal } = await supabase
+    .from('goals')
+    .select('employee_id, users!employee_id(email)')
+    .eq('id', goalId)
+    .single()
+
+  // 2. Update status
   const { error } = await supabase
     .from('goals')
     .update({ status: 'locked' })
@@ -16,7 +25,7 @@ export async function approveGoal(goalId: string) {
 
   if (error) return { error: error.message }
 
-  // Log to audit_log
+  // 3. Log to audit_log
   await supabase.from('audit_log').insert({
     goal_id: goalId,
     changed_by: user.id,
@@ -25,6 +34,18 @@ export async function approveGoal(goalId: string) {
     old_value: 'submitted',
     new_value: 'locked'
   })
+
+  // 4. Notify employee
+  if (goal?.users) {
+    const employeeEmail = (goal.users as any).email
+    if (employeeEmail) {
+      await sendEmail(
+        employeeEmail,
+        'Your Goals Have Been Approved',
+        '<p>Your goals have been approved and locked by your manager.</p>'
+      )
+    }
+  }
   
   revalidatePath('/manager/team')
   revalidatePath(`/manager/goals`)
@@ -36,7 +57,14 @@ export async function returnGoal(goalId: string, comment: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
   
-  // 1. Update goal status
+  // 1. Fetch goal and employee details
+  const { data: goal } = await supabase
+    .from('goals')
+    .select('title, employee_id, users!employee_id(email)')
+    .eq('id', goalId)
+    .single()
+
+  // 2. Update goal status
   const { error: goalError } = await supabase
     .from('goals')
     .update({ status: 'returned' })
@@ -44,7 +72,7 @@ export async function returnGoal(goalId: string, comment: string) {
 
   if (goalError) return { error: goalError.message }
 
-  // 2. Add comment
+  // 3. Add comment
   if (comment) {
     const { error: commentError } = await supabase
       .from('checkin_comments')
@@ -57,7 +85,7 @@ export async function returnGoal(goalId: string, comment: string) {
     if (commentError) return { error: commentError.message }
   }
 
-  // 3. Log to audit_log
+  // 4. Log to audit_log
   await supabase.from('audit_log').insert({
     goal_id: goalId,
     changed_by: user.id,
@@ -66,6 +94,18 @@ export async function returnGoal(goalId: string, comment: string) {
     old_value: 'submitted',
     new_value: 'returned'
   })
+
+  // 5. Notify employee
+  if (goal?.users) {
+    const employeeEmail = (goal.users as any).email
+    if (employeeEmail) {
+      await sendEmail(
+        employeeEmail,
+        'Your Goals Need Revision',
+        `<p>Your goal <strong>${goal.title}</strong> was returned with comment: <em>"${comment}"</em></p>`
+      )
+    }
+  }
   
   revalidatePath('/manager/team')
   return { success: true }
