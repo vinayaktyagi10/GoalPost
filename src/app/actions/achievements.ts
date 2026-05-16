@@ -18,14 +18,21 @@ export async function upsertAchievement(formData: {
     return { error: `Achievement logging for ${formData.quarter} is currently closed.` }
   }
 
-  // 1. Get the goal details to compute the score
+  // 1. Get the goal details and existing achievement
   const { data: goal, error: goalError } = await supabase
     .from('goals')
-    .select('uom_type, target, target_date, is_shared, parent_shared_goal_id')
+    .select('status, uom_type, target, target_date, is_shared, parent_shared_goal_id')
     .eq('id', formData.goalId)
     .single()
 
   if (goalError) return { error: goalError.message }
+
+  const { data: oldAchievement } = await supabase
+    .from('achievements')
+    .select('actual_value, actual_date')
+    .eq('goal_id', formData.goalId)
+    .eq('quarter', formData.quarter)
+    .single()
 
   // 2. Compute the score
   const computedScore = calculateProgressScore(
@@ -53,7 +60,27 @@ export async function upsertAchievement(formData: {
 
   if (error) return { error: error.message }
 
-  // 4. Sync shared goals if applicable
+  // 4. Log to audit_log if goal is locked
+  if (goal.status === 'locked') {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const newValue = formData.actualValue?.toString() || formData.actualDate || ''
+      const oldValue = oldAchievement?.actual_value?.toString() || oldAchievement?.actual_date || ''
+      
+      if (newValue !== oldValue) {
+        await supabase.from('audit_log').insert({
+          goal_id: formData.goalId,
+          changed_by: user.id,
+          action: 'achievement_update',
+          field_changed: formData.actualDate ? 'actual_date' : 'actual_value',
+          old_value: oldValue,
+          new_value: newValue
+        })
+      }
+    }
+  }
+
+  // 5. Sync shared goals if applicable
   if (goal.is_shared) {
     const parentIdToMatch = goal.parent_shared_goal_id || formData.goalId
     

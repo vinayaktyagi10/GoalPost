@@ -6,6 +6,8 @@ import { getCurrentQuarter } from '@/lib/utils/calculator'
 
 export async function approveGoal(goalId: string) {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
   
   const { error } = await supabase
     .from('goals')
@@ -13,6 +15,16 @@ export async function approveGoal(goalId: string) {
     .eq('id', goalId)
 
   if (error) return { error: error.message }
+
+  // Log to audit_log
+  await supabase.from('audit_log').insert({
+    goal_id: goalId,
+    changed_by: user.id,
+    action: 'goal_approved',
+    field_changed: 'status',
+    old_value: 'submitted',
+    new_value: 'locked'
+  })
   
   revalidatePath('/manager/team')
   revalidatePath(`/manager/goals`)
@@ -44,6 +56,16 @@ export async function returnGoal(goalId: string, comment: string) {
       })
     if (commentError) return { error: commentError.message }
   }
+
+  // 3. Log to audit_log
+  await supabase.from('audit_log').insert({
+    goal_id: goalId,
+    changed_by: user.id,
+    action: 'goal_returned',
+    field_changed: 'status',
+    old_value: 'submitted',
+    new_value: 'returned'
+  })
   
   revalidatePath('/manager/team')
   return { success: true }
