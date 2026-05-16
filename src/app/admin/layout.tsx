@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 
 const navItems = [
   { title: 'Dashboard', href: '/admin/dashboard' },
+  { title: 'Analytics', href: '/admin/analytics' },
   { title: 'Reports', href: '/admin/reports' },
   { title: 'Audit Log', href: '/admin/audit-log' },
   { title: 'Shared Goals', href: '/admin/shared-goals' },
