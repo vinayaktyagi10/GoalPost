@@ -35,7 +35,7 @@ export function GoalSubmitAction({ goalId, status }: GoalSubmitActionProps) {
       disabled={isLoading}
     >
       <Send className="mr-2 h-4 w-4" />
-      Submit
+      {status === 'returned' ? 'Resubmit' : 'Submit'}
     </Button>
   )
 }
