@@ -55,3 +55,31 @@ export async function createGoal(formData: any) {
   revalidatePath('/employee/goals')
   return { success: true }
 }
+
+export async function deleteGoal(goalId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  // 1. Check goal exists and is in 'draft' status
+  const { data: goal } = await supabase
+    .from('goals')
+    .select('status, employee_id')
+    .eq('id', goalId)
+    .single()
+
+  if (!goal) return { error: 'Goal not found' }
+  if (goal.employee_id !== user.id) return { error: 'Unauthorized' }
+  if (goal.status !== 'draft') return { error: 'Only draft goals can be deleted.' }
+
+  // 2. Delete
+  const { error } = await supabase
+    .from('goals')
+    .delete()
+    .eq('id', goalId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/employee/goals')
+  return { success: true }
+}

@@ -1,7 +1,9 @@
-// src/components/layout/Sidebar.tsx
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { logout } from '@/app/login/actions'  // ADD THIS
+import { logout } from '@/app/login/actions'
 
 interface NavItem {
   title: string
@@ -14,6 +16,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ items, title }: SidebarProps) {
+  const pathname = usePathname()
+
   return (
     <div className="w-64 border-r bg-muted/40 h-[calc(100vh)] sticky top-0 flex flex-col p-4">
       <div className="mb-6 px-2">
@@ -21,13 +25,19 @@ export function Sidebar({ items, title }: SidebarProps) {
         <p className="text-xs text-muted-foreground mt-1">{title}</p>
       </div>
       <nav className="space-y-2 flex-1">
-        {items.map((item) => (
-          <Link key={item.href} href={item.href}>
-            <Button variant="ghost" className="w-full justify-start">
-              {item.title}
-            </Button>
-          </Link>
-        ))}
+        {items.map((item) => {
+          const isActive = pathname === item.href
+          return (
+            <Link key={item.href} href={item.href}>
+              <Button 
+                variant={isActive ? "secondary" : "ghost"} 
+                className="w-full justify-start font-medium"
+              >
+                {item.title}
+              </Button>
+            </Link>
+          )
+        })}
       </nav>
       <form action={logout}>
         <Button

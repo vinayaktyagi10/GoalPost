@@ -6,6 +6,7 @@ import { GoalStatusBadge } from '@/components/goals/GoalStatusBadge'
 import { PlusCircle } from 'lucide-react'
 import { WeightageBar } from '@/components/goals/WeightageBar'
 import { GoalSubmitAction } from '@/components/goals/GoalSubmitAction'
+import { DeleteGoalButton } from '@/components/goals/DeleteGoalButton'
 
 export default async function EmployeeGoalsPage() {
   const supabase = await createClient()
@@ -66,6 +67,7 @@ export default async function EmployeeGoalsPage() {
                     <GoalStatusBadge status={goal.status} />
                   </TableCell>
                   <TableCell className="text-right space-x-2">
+                    {goal.status === 'draft' && <DeleteGoalButton goalId={goal.id} />}
                     <GoalSubmitAction goalId={goal.id} status={goal.status} />
                     <Link href={`/employee/goals/${goal.id}`}>
                       <Button variant="ghost" size="sm">View</Button>
