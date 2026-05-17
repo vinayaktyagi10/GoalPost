@@ -19,7 +19,7 @@ export default async function AnalyticsPage() {
   // 3. Employees and their achievements for Heatmap
   const { data: employees } = await supabase
     .from('users')
-    .select('id, name, achievements(quarter, progress_status)')
+    .select('id, name, goals(achievements(quarter, progress_status))')
     .eq('role', 'employee')
 
   // 4. Managers data for Effectiveness

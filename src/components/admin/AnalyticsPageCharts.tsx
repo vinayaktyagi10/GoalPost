@@ -98,26 +98,34 @@ export function AnalyticsPageCharts({
                 </tr>
               </thead>
               <tbody>
-                {employees?.map(emp => (
-                  <tr key={emp.id}>
-                    <td className="p-2 border font-medium text-sm">{emp.name}</td>
-                    {quarters.map(q => {
-                      const achievement = (emp as any).achievements?.find((a: any) => a.quarter === q)
-                      const status = achievement?.progress_status
-                      
-                      let colorClass = "bg-gray-100" // No record
-                      if (status === 'completed') colorClass = "bg-green-500"
-                      if (status === 'on_track') colorClass = "bg-yellow-400"
-                      if (status === 'not_started') colorClass = "bg-red-400"
+                {employees?.map(emp => {
+                  const allAchievements = emp.goals?.flatMap(
+                    (g: any) => g.achievements || []
+                  ) || []
 
-                      return (
-                        <td key={q} className="p-2 border text-center">
-                          <div className={`w-6 h-6 rounded-sm mx-auto ${colorClass}`} title={status || 'No data'} />
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
+                  return (
+                    <tr key={emp.id}>
+                      <td className="p-2 border font-medium text-sm">{emp.name}</td>
+                      {quarters.map(q => {
+                        const achievement = allAchievements.find(
+                          (a: any) => a.quarter === q
+                        )
+                        const status = achievement?.progress_status
+                        
+                        let colorClass = "bg-gray-100" // No record
+                        if (status === 'completed') colorClass = "bg-green-500"
+                        if (status === 'on_track') colorClass = "bg-yellow-400"
+                        if (status === 'not_started') colorClass = "bg-red-400"
+
+                        return (
+                          <td key={q} className="p-2 border text-center">
+                            <div className={`w-6 h-6 rounded-sm mx-auto ${colorClass}`} title={status || 'No data'} />
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
