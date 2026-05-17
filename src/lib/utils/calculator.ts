@@ -41,6 +41,11 @@ export function calculateProgressScore(
 }
 
 export function getCurrentQuarter(): string {
+  // Allow overriding quarter for demo purposes
+  if (process.env.NEXT_PUBLIC_DEMO_QUARTER) {
+    return process.env.NEXT_PUBLIC_DEMO_QUARTER
+  }
+
   const month = new Date().getMonth() + 1 // 1-12
   if (month >= 7 && month <= 9) return 'Q1'
   if (month >= 10 && month <= 12) return 'Q2'
