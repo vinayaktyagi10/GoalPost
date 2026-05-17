@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WeightageBar } from './WeightageBar'
-import { createGoal } from '@/app/actions/goals'
+import { createGoal, updateGoal } from '@/app/actions/goals'
 import { toast } from 'sonner'
 
 const goalSchema = z.object({
@@ -60,7 +60,10 @@ export function GoalForm({ currentWeightageTotal, initialData, isShared }: GoalF
     }
 
     setIsLoading(true)
-    const result = await createGoal(data)
+    const result = initialData 
+      ? await updateGoal(initialData.id, data)
+      : await createGoal(data)
+
     if (result?.error) {
       toast.error(result.error)
       setIsLoading(false)

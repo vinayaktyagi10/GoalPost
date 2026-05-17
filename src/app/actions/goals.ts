@@ -56,6 +56,64 @@ export async function createGoal(formData: any) {
   return { success: true }
 }
 
+export async function updateGoal(goalId: string, formData: any) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  // 1. Fetch current goal
+  const { data: goal } = await supabase
+    .from('goals')
+    .select('*')
+    .eq('id', goalId)
+    .single()
+
+  if (!goal) return { error: 'Goal not found' }
+  if (goal.employee_id !== user.id) return { error: 'Unauthorized' }
+  if (!['draft', 'returned'].includes(goal.status)) {
+    return { error: 'Only draft or returned goals can be edited.' }
+  }
+
+  // 2. Validate total weightage
+  const currentSum = await getWeightageSum(user.id)
+  const newWeightage = Number(formData.weightage)
+  const weightageDiff = newWeightage - Number(goal.weightage)
+
+  if (currentSum + weightageDiff > 100) {
+    return { error: `Total weightage would exceed 100% (Current: ${currentSum + weightageDiff}%)` }
+  }
+
+  // 3. Prepare update data
+  let updateData: any = {
+    weightage: newWeightage,
+    updated_at: new Date().toISOString()
+  }
+
+  // Only allow updating other fields if NOT a shared goal
+  if (!goal.is_shared) {
+    updateData = {
+      ...updateData,
+      thrust_area: formData.thrust_area,
+      title: formData.title,
+      description: formData.description || null,
+      uom_type: formData.uom_type,
+      target: formData.target ? Number(formData.target) : null,
+      target_date: formData.target_date || null,
+    }
+  }
+
+  const { error } = await supabase
+    .from('goals')
+    .update(updateData)
+    .eq('id', goalId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/employee/goals')
+  revalidatePath(`/employee/goals/${goalId}`)
+  return { success: true }
+}
+
 export async function deleteGoal(goalId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

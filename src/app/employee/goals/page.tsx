@@ -69,6 +69,11 @@ export default async function EmployeeGoalsPage() {
                   <TableCell className="text-right space-x-2">
                     {goal.status === 'draft' && <DeleteGoalButton goalId={goal.id} />}
                     <GoalSubmitAction goalId={goal.id} status={goal.status} />
+                    {['draft', 'returned'].includes(goal.status) && (
+                      <Link href={`/employee/goals/${goal.id}/edit`}>
+                        <Button variant="outline" size="sm">Edit</Button>
+                      </Link>
+                    )}
                     <Link href={`/employee/goals/${goal.id}`}>
                       <Button variant="ghost" size="sm">View</Button>
                     </Link>
