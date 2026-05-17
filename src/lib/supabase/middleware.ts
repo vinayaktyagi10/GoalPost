@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
+    if (request.nextUrl.pathname === '/auth/callback'){
+        return NextResponse.next()
+    }
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -54,8 +57,8 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
 
     if (path.startsWith('/employee') && role !== 'employee') {
-      url.pathname = role === 'admin' 
-        ? '/admin/dashboard' 
+      url.pathname = role === 'admin'
+        ? '/admin/dashboard'
         : '/manager/team'
       return NextResponse.redirect(url)
     }
