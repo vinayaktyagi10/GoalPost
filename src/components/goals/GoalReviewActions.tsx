@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { approveGoal, returnGoal } from '@/app/actions/manager'
@@ -16,6 +17,7 @@ export function GoalReviewActions({ goalId, status }: GoalReviewActionsProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showReturnInput, setShowReturnInput] = useState(false)
   const [returnComment, setReturnComment] = useState('')
+  const router = useRouter()
 
   if (status !== 'submitted') return null
 
@@ -24,6 +26,7 @@ export function GoalReviewActions({ goalId, status }: GoalReviewActionsProps) {
     const result = await approveGoal(goalId)
     if (result.success) {
       toast.success('Goal approved & locked')
+      router.refresh()
     } else {
       toast.error(result.error || 'Failed to approve goal')
     }
@@ -41,6 +44,7 @@ export function GoalReviewActions({ goalId, status }: GoalReviewActionsProps) {
       toast.success('Goal returned to employee')
       setShowReturnInput(false)
       setReturnComment('')
+      router.refresh()
     } else {
       toast.error(result.error || 'Failed to return goal')
     }
