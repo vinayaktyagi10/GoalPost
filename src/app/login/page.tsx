@@ -18,7 +18,7 @@ export default function LoginPage() {
       provider: 'azure',
       options: {
         scopes: 'email profile',
-        redirectTo: window.location.origin + '/auth/callback'
+        redirectTo: `${window.location.origin}/auth/callback`
       }
     })
   }
