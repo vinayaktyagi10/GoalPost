@@ -89,11 +89,11 @@ export default function LoginPage() {
               className="w-full bg-[#0078d4] text-white hover:bg-[#006cc1] hover:text-white border-none"
               onClick={handleMicrosoftLogin}
             >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23" xmlns="http://www.w3.org/2000/svg">
-                <path fill="#f3f3f3" d="M0 0h11v11H0z"/>
-                <path fill="#f3f3f3" d="M12 0h11v11H12z"/>
-                <path fill="#f3f3f3" d="M0 12h11v11H0z"/>
-                <path fill="#f3f3f3" d="M12 12h11v11H12z"/>
+              <svg className="mr-2 h-4 w-4" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
               </svg>
               Sign in with Microsoft
             </Button>
