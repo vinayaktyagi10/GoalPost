@@ -33,9 +33,12 @@ export default async function ReportsPage() {
     ThrustArea: row.goals?.thrust_area,
     Weightage: row.goals?.weightage,
     Quarter: row.quarter,
-    Target: row.goals?.target,
-    Actual: row.actual_value,
+    Target: row.goals?.target ?? 
+      (row.goals?.uom_type === 'timeline' ? row.goals?.target_date : 'N/A'),
+    Actual: row.actual_value ?? 
+      (row.actual_date || 'Not logged'),
     Score: row.computed_score,
+    Status: row.progress_status
   }))
 
   return (
