@@ -15,24 +15,35 @@ export default async function AuditLogPage({ searchParams }: AuditLogPageProps) 
   const params = await searchParams
   const supabase = await createClient()
 
-  let query = supabase
+  // 1. Fetch all logs first (Supabase cannot filter on joined table columns via basic .or)
+  const { data: allLogs } = await supabase
     .from('audit_log')
     .select('*, users(name), goals(title)')
     .order('timestamp', { ascending: false })
 
+  let logs = allLogs || []
+
+  // 2. Apply search filter in JavaScript
   if (params.search) {
-    query = query.or(`action.ilike.%${params.search}%,users.name.ilike.%${params.search}%`)
+    const searchLower = params.search.toLowerCase()
+    logs = logs.filter(log => 
+      log.action?.toLowerCase().includes(searchLower) ||
+      log.users?.name?.toLowerCase().includes(searchLower) ||
+      log.goals?.title?.toLowerCase().includes(searchLower) ||
+      log.field_changed?.toLowerCase().includes(searchLower)
+    )
   }
 
+  // 3. Apply date filters in JavaScript
   if (params.from) {
-    query = query.gte('timestamp', `${params.from}T00:00:00`)
+    const fromDate = new Date(`${params.from}T00:00:00`)
+    logs = logs.filter(log => new Date(log.timestamp) >= fromDate)
   }
 
   if (params.to) {
-    query = query.lte('timestamp', `${params.to}T23:59:59`)
+    const toDate = new Date(`${params.to}T23:59:59`)
+    logs = logs.filter(log => new Date(log.timestamp) <= toDate)
   }
-
-  const { data: logs } = await query
 
   return (
     <div className="container mx-auto py-10 px-4">
@@ -57,14 +68,14 @@ export default async function AuditLogPage({ searchParams }: AuditLogPageProps) 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(logs || []).length === 0 ? (
+            {logs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                   No audit entries found matching the filters.
                 </TableCell>
               </TableRow>
             ) : (
-              logs?.map((log) => (
+              logs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="text-xs">
                     {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')}
