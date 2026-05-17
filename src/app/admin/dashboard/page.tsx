@@ -1,10 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { CompletionChart } from '@/components/admin/AnalyticsCharts'
-import { DeleteGoalAdminButton } from '@/components/admin/DeleteGoalAdminButton'
-import { GoalStatusBadge } from '@/components/goals/GoalStatusBadge'
+import { AdminGoalManagement } from '@/components/admin/AdminGoalManagement'
+import { Users, Target, Clock, CheckCircle2 } from 'lucide-react'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -12,27 +11,21 @@ export default async function AdminDashboardPage() {
   // 1. Get Org Stats
   const { data: allGoalsData } = await supabase
     .from('goals')
-    .select('*, users!employee_id(name, email)')
+    .select('*, users!employee_id(name, email, department)')
     .order('created_at', { ascending: false })
 
   const { data: allUsers } = await supabase.from('users').select('id')
   
   const totalGoals = allGoalsData?.length || 0
+  const pendingApprovals = allGoalsData?.filter(g => g.status === 'submitted').length || 0
   const approvedGoals = allGoalsData?.filter(g => g.status === 'approved' || g.status === 'locked').length || 0
   const completionRate = totalGoals > 0 ? (approvedGoals / totalGoals) * 100 : 0
 
-  // 2. Get Employee Completion Status
+  // 2. Get Employee Completion Status for Chart
   const { data: employees } = await supabase
     .from('users')
     .select('id, name, email, department, goals(status)')
     .eq('role', 'employee')
-
-  const employeeStats = (employees || []).map(emp => {
-    const goals = emp.goals || []
-    const total = goals.length
-    const approved = goals.filter((g: any) => g.status === 'approved' || g.status === 'locked').length
-    return { ...emp, total, approved }
-  })
 
   const chartData = (employees || []).map(emp => {
     const goals = emp.goals || []
@@ -47,12 +40,52 @@ export default async function AdminDashboardPage() {
   return (
     <div className="container mx-auto py-10 px-4 space-y-10">
       <div>
-        <h1 className="text-3xl font-bold">Organization Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Overview of goal completion across the company.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Organization Dashboard</h1>
+        <p className="text-muted-foreground mt-1 text-lg">Central hub for goal monitoring and compliance.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+      {/* 4 Stat Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Employees</CardTitle>
+            <Users className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{allUsers?.length || 0}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-purple-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Total Goals</CardTitle>
+            <Target className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{totalGoals}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pending Approvals</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-amber-600">{pendingApprovals}</div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Completion Rate</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">{completionRate.toFixed(1)}%</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-3">
           <CardHeader>
             <CardTitle>Team Completion Rates (%)</CardTitle>
           </CardHeader>
@@ -60,101 +93,15 @@ export default async function AdminDashboardPage() {
             <CompletionChart data={chartData} />
           </CardContent>
         </Card>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Org Completion Rate</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">{completionRate.toFixed(1)}%</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Approved Goals</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-green-600">{approvedGoals}</div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
 
       <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Goal Management</h2>
-        <div className="border rounded-lg bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Goal Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Weightage</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(allGoalsData || []).length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">No goals found.</TableCell>
-                </TableRow>
-              ) : (
-                allGoalsData?.map((goal) => (
-                  <TableRow key={goal.id}>
-                    <TableCell>
-                      <div className="font-medium">{(goal.users as any)?.name}</div>
-                      <div className="text-xs text-muted-foreground">{(goal.users as any)?.email}</div>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate" title={goal.title}>{goal.title}</TableCell>
-                    <TableCell><GoalStatusBadge status={goal.status} /></TableCell>
-                    <TableCell>{goal.weightage}%</TableCell>
-                    <TableCell className="text-right">
-                      <DeleteGoalAdminButton goalId={goal.id} goalTitle={goal.title} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold tracking-tight">Goal Management</h2>
+          <Badge variant="outline" className="text-xs font-mono">{totalGoals} Total Records</Badge>
         </div>
-      </section>
-
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold">Employee Completion Stats</h2>
-        <div className="border rounded-lg bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Goal Progress</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employeeStats.map((emp) => (
-                <TableRow key={emp.id}>
-                  <TableCell>
-                    <div className="font-medium">{emp.name}</div>
-                    <div className="text-xs text-muted-foreground">{emp.email}</div>
-                  </TableCell>
-                  <TableCell>{emp.department}</TableCell>
-                  <TableCell>
-                    {emp.approved} / {emp.total} Approved
-                  </TableCell>
-                  <TableCell>
-                    {emp.approved === emp.total && emp.total > 0 ? (
-                      <Badge className="bg-green-500">100% Complete</Badge>
-                    ) : (
-                      <Badge variant="outline">In Progress</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        
+        <AdminGoalManagement initialGoals={allGoalsData as any || []} />
       </section>
     </div>
   )
