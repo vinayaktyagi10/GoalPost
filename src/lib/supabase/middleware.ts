@@ -51,15 +51,24 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Role-based path protection
-    if (path.startsWith('/admin') && role !== 'admin') {
-      const url = request.nextUrl.clone()
-      url.pathname = role === 'manager' ? '/manager/team' : '/employee/goals'
+    const url = request.nextUrl.clone()
+
+    if (path.startsWith('/employee') && role !== 'employee') {
+      url.pathname = role === 'admin' 
+        ? '/admin/dashboard' 
+        : '/manager/team'
       return NextResponse.redirect(url)
     }
 
-    if (path.startsWith('/manager') && role !== 'manager' && role !== 'admin') {
-      const url = request.nextUrl.clone()
+    if (path.startsWith('/manager') && role === 'employee') {
       url.pathname = '/employee/goals'
+      return NextResponse.redirect(url)
+    }
+
+    if (path.startsWith('/admin') && role !== 'admin') {
+      url.pathname = role === 'manager'
+        ? '/manager/team'
+        : '/employee/goals'
       return NextResponse.redirect(url)
     }
   }
