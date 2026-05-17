@@ -10,8 +10,8 @@ export async function sendEmail(to: string, subject: string, html: string) {
 
   try {
     await resend.emails.send({
-      from: 'GoalPost <onboarding@resend.dev>', // Using Resend's default domain for now
-      to,
+      from: 'GoalPost <onboarding@resend.dev>',
+      to: process.env.DEMO_EMAIL || to,
       subject,
       html,
     })
