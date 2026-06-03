@@ -1,36 +1,199 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoalPost ⚽
+### In-House Goal Setting & Tracking Portal
+> AtomQuest Hackathon 1.0 — Solo Submission
 
-## Getting Started
+**Live Demo:** https://goal-post-mauve.vercel.app  
+**Stack:** Next.js 14 · TypeScript · Tailwind CSS · Supabase · Vercel · Resend · Microsoft Entra ID
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Demo Credentials
+
+| Role | Email | Password |
+|---|---|---|
+| Employee | employee@demo.com | Demo@1234 |
+| Manager | manager@demo.com | Demo@1234 |
+| Admin / HR | admin@demo.com | Demo@1234 |
+
+> **Microsoft SSO** is also enabled — click "Sign in with Microsoft" on the login page. Any Microsoft account is supported and auto-provisioned as Employee.
+
+---
+
+## Features
+
+### Phase 1 — Goal Creation & Approval
+- Employee interface to create goals with Thrust Area, Title, UoM, Target, and Weightage
+- All 4 UoM types supported: Numeric (Min/Max), Timeline, Zero-based
+- System-enforced validation rules:
+  - Total weightage must equal exactly 100%
+  - Minimum weightage per goal: 10%
+  - Maximum goals per employee: 8
+- Manager (L1) approval workflow with inline editing of targets and weightages
+- Goals locked on approval — no edits without Admin intervention
+- Admin unlock capability with full audit logging
+- Shared Goals — admin pushes KPI to multiple employees; recipients adjust weightage only; achievement updates sync across all linked goal sheets
+
+### Phase 2 — Achievement Tracking & Check-ins
+- Quarterly achievement input per goal (Q1–Q4)
+- Manual status selection: Not Started / On Track / Completed
+- System-computed progress scores using all 4 formulas:
+  - **Min** → `Achievement ÷ Target × 100`
+  - **Max** → `Target ÷ Achievement × 100`
+  - **Timeline** → `Completion date ≤ Deadline ? 100% : 0%`
+  - **Zero** → `Actual = 0 ? 100% : 0%`
+- Manager check-in module with Planned vs Actual grid
+- Structured check-in comments per goal per quarter
+- Employee view of manager feedback on goal detail page
+
+### Reporting & Governance
+- Achievement report exportable as CSV (Planned vs Actual for all employees)
+- Real-time completion dashboard with org-wide stats
+- Full audit trail — logs every post-lock change with who, what, when
+- Audit log with date range and text search filters
+
+### Good-to-Have Bonus Features
+- **Microsoft Entra ID SSO** — OAuth 2.0 via Azure Student subscription, any MS account supported, auto user provisioning
+- **Email Notifications** — goal submission, approval, return, unlock, escalation via Resend (toolden.xyz verified domain)
+- **Escalation Module** — configurable rules (goal not submitted, not approved, check-in not completed), violation checker, escalation log, manager email alerts
+- **Analytics Module** — QoQ achievement trends, goal distribution by thrust area, completion heatmap, manager effectiveness dashboard
+- **User Management** — admin assigns roles to SSO users
+- **Role-coloured sidebar** — user profile with initials avatar, name, role badge
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 14 App Router, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend | Next.js Server Actions, API Routes |
+| Database | Supabase (PostgreSQL) — ap-south-1 Mumbai |
+| Auth | Supabase Auth + Microsoft Entra ID (OAuth 2.0) |
+| Email | Resend SDK, toolden.xyz verified sending domain |
+| Charts | Recharts |
+| CSV Export | Papaparse |
+| Hosting | Vercel (free tier, auto-deploy from GitHub) |
+
+**Total infrastructure cost: $0/month** — all services on permanent free tiers.
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── actions/          # Server actions (goals, manager, admin, achievements)
+│   ├── admin/            # Admin pages (dashboard, analytics, audit, escalations)
+│   ├── employee/         # Employee pages (goals, checkin, goal detail)
+│   ├── manager/          # Manager pages (team, goals review, checkin)
+│   ├── api/              # API routes (escalation check)
+│   ├── auth/callback/    # Microsoft SSO OAuth callback
+│   └── login/            # Login page + actions
+├── components/
+│   ├── admin/            # Analytics charts, export button, goal management
+│   ├── goals/            # Goal form, status badge, quarterly input, etc.
+│   └── layout/           # Sidebar with user profile
+└── lib/
+    ├── supabase/         # Server, client, middleware clients
+    ├── utils/            # Progress score calculator, quarter utils
+    └── email.ts          # Resend email wrapper
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Getting Started Locally
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
+- Node.js 18+
+- A Supabase project
+- A Resend account
+- A Microsoft Azure app registration (for SSO)
 
-## Learn More
+### Setup
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Clone the repository
+git clone https://github.com/vinayaktyagi10/GoalPost.git
+cd GoalPost
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Install dependencies
+npm install
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Create environment file
+cp .env.example .env.local
+```
 
-## Deploy on Vercel
+### Environment Variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+NEXT_PUBLIC_DEMO_MODE=true
+NEXT_PUBLIC_DEMO_QUARTER=Q2
+RESEND_API_KEY=your_resend_api_key
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Database Setup
+
+Run the schema SQL in your Supabase SQL Editor — all table definitions, RLS policies, and triggers are in `supabase_setup.sql` at the root of the repository.
+
+```bash
+# Start development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) — redirects to login page.
+
+---
+
+## Deployment
+
+The app is deployed on Vercel with automatic deployments on every push to `main`.
+
+```bash
+# Deploy manually
+vercel --prod
+```
+
+Required Vercel environment variables — same as above plus:
+```
+NEXT_PUBLIC_DEMO_MODE=true
+NEXT_PUBLIC_DEMO_QUARTER=Q2
+```
+
+---
+
+## Architecture
+
+```
+Browser (Employee / Manager / Admin)
+         │
+         │ HTTPS
+         ▼
+  Vercel (Next.js 14)
+  ├── App Router (SSR + Server Actions)
+  └── Proxy Middleware (Auth guard, role routing)
+         │
+         ├──────────────────────────────┐──────────────────┐
+         ▼                              ▼                  ▼
+  Supabase                     Microsoft Entra ID       Resend
+  ├── PostgreSQL (5 tables)     OAuth 2.0 / OIDC        Email API
+  └── Auth (JWT sessions)       Any MS account          toolden.xyz
+```
+
+---
+
+## Notes
+
+- **RLS** (Row Level Security) policies are fully defined in the schema. Disabled in the demo environment for stability — re-enable in production.
+- **Quarterly windows** are enforced by `isQuarterlyWindowActive()`. `NEXT_PUBLIC_DEMO_MODE=true` bypasses this for demo purposes.
+- **Escalation check** is triggered manually via the admin panel. In production, a Vercel Cron job would run this daily.
+- **Microsoft SSO** requires an Azure app registration. Configured with Azure Student subscription — any Microsoft account can authenticate.
+
+---
+
+## License
+
+Built for AtomQuest Hackathon 1.0. Solo submission.
